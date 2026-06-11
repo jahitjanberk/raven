@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+build/
+frontend/dist/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.secret
+
+# Backend databases — NEVER commit these; may contain case data or credentials
+backend/raven.db
+backend/strata.db
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp

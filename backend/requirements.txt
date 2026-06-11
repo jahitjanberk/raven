@@ -1,0 +1,12 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+httpx==0.28.1
+python-whois==0.9.4
+shodan==1.31.0
+pydantic==2.10.3
+sqlalchemy==2.0.36
+python-jose[cryptography]==3.3.0
+bcrypt==5.0.0
+fpdf2==2.8.3
+# playwright (optional) — install separately: pip install playwright && playwright install chromium
+# Enables screenshots for URL/domain evidence captures.

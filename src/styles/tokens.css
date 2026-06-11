@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+/* ── Light theme (default) ─────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-base:       #ffffff;
+  --bg-surface:    #ffffff;
+  --bg-raised:     #f8f8fa;
+  --bg-overlay:    #f0f0f2;
+  --bg-hover:      #f4f4f6;
+
+  /* Borders */
+  --border-subtle: #ececee;
+  --border-soft:   #e4e4e6;
+  --border-mid:    #d4d4d7;
+  --border-strong: #9a9aa0;
+
+  /* Text */
+  --text-primary:   #0a0a0b;
+  --text-secondary: #3a3a3f;
+  --text-tertiary:  #9a9aa0;
+  --text-muted:     #d4d4d7;
+
+  /* Accent — black, not blue */
+  --accent:                #0a0a0b;
+  --accent-dim:            #1c1c22;
+  --accent-gradient:       #0a0a0b;
+  --accent-gradient-hover: #1c1c22;
+  --accent-soft:           rgba(10,10,11,0.06);
+  --accent-border:         rgba(10,10,11,0.18);
+  --accent-glow:           rgba(10,10,11,0.04);
+
+  /* Semantic colours */
+  --red:          #dc2626;
+  --red-soft:     rgba(220,38,38,0.07);
+  --red-border:   rgba(220,38,38,0.2);
+  --amber:        #d97706;
+  --amber-soft:   rgba(217,119,6,0.07);
+  --amber-border: rgba(217,119,6,0.2);
+  --green:        #16a34a;
+  --green-soft:   rgba(22,163,74,0.07);
+  --green-border: rgba(22,163,74,0.2);
+  --purple:       #7c3aed;
+  --purple-soft:  rgba(124,58,237,0.07);
+
+  /* Typography */
+  --font-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Easing curves */
+  --ease-smooth:    cubic-bezier(0.25, 0.1,  0.25, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1,    0.3,  1);
+  --ease-out-quart: cubic-bezier(0.25, 1,    0.5,  1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-quart:  cubic-bezier(0.5,  0,    0.75, 0);
+
+  /* Durations */
+  --dur-fast:   110ms;
+  --dur-normal: 220ms;
+  --dur-slow:   400ms;
+
+  /* Border radii — flat, editorial */
+  --r-xs: 1px;
+  --r-sm: 2px;
+  --r-md: 2px;
+  --r-lg: 3px;
+  --r-xl: 4px;
+
+  /* Shadows — minimal */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 20px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.04);
+
+  /* Glass */
+  --glass-bg:     rgba(255,255,255,0.92);
+  --glass-border: rgba(10,10,11,0.08);
+  --glass-shadow: -8px 0 32px rgba(0,0,0,0.06), -1px 0 0 rgba(0,0,0,0.04);
+  --glass-inner:  rgba(255,255,255,0.7);
+}
+
+/* ── Dark theme ────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-base:       #0a0a0c;
+  --bg-surface:    #111114;
+  --bg-raised:     #18181c;
+  --bg-overlay:    #1e1e24;
+  --bg-hover:      #24242c;
+
+  /* Borders */
+  --border-subtle: #1c1c22;
+  --border-soft:   #26262e;
+  --border-mid:    #32323c;
+  --border-strong: #48484e;
+
+  /* Text */
+  --text-primary:   #f2f2f4;
+  --text-secondary: #9a9aa0;
+  --text-tertiary:  #5c5c64;
+  --text-muted:     #32323c;
+
+  /* Accent — white on dark */
+  --accent:                #f2f2f4;
+  --accent-dim:            #d4d4d7;
+  --accent-gradient:       #f2f2f4;
+  --accent-gradient-hover: #ffffff;
+  --accent-soft:           rgba(242,242,244,0.08);
+  --accent-border:         rgba(242,242,244,0.18);
+  --accent-glow:           rgba(242,242,244,0.06);
+
+  /* Semantic colours */
+  --red:          #e05252;
+  --red-soft:     rgba(224,82,82,0.10);
+  --red-border:   rgba(224,82,82,0.25);
+  --amber:        #c98a2e;
+  --amber-soft:   rgba(201,138,46,0.10);
+  --amber-border: rgba(201,138,46,0.25);
+  --green:        #3dad7a;
+  --green-soft:   rgba(61,173,122,0.10);
+  --green-border: rgba(61,173,122,0.25);
+  --purple:       #9b6ee8;
+  --purple-soft:  rgba(155,110,232,0.10);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.55);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.65);
+
+  /* Glass */
+  --glass-bg:     rgba(17,17,20,0.92);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-shadow: -8px 0 32px rgba(0,0,0,0.55), -1px 0 0 rgba(255,255,255,0.04);
+  --glass-inner:  rgba(255,255,255,0.03);
+}
