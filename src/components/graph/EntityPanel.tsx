@@ -8,6 +8,7 @@ import {
   fetchTransforms,
   runTransform,
   applyTransformResult,
+  UpgradeRequiredError,
 } from '../../api/transforms'
 import type { Transform, ResultNode } from '../../api/transforms'
 import { fetchNodeEvidence } from '../../api/evidence'
@@ -248,14 +249,12 @@ export function EntityPanel({ onViewMap }: EntityPanelProps) {
         [t.slug]: { running: false, addedCount, addedNodes: result.nodes, error: null },
       }))
     } catch (e: unknown) {
+      const error = e instanceof UpgradeRequiredError
+        ? '⬆ Pro plan required — upgrade at raven.app/pricing'
+        : e instanceof Error ? e.message : 'Transform failed'
       setRunStates(prev => ({
         ...prev,
-        [t.slug]: {
-          running: false,
-          addedCount: null,
-          addedNodes: [],
-          error: e instanceof Error ? e.message : 'Transform failed',
-        },
+        [t.slug]: { running: false, addedCount: null, addedNodes: [], error },
       }))
     }
   }

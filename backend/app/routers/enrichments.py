@@ -9,9 +9,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
-from app.deps import get_db
+from app.deps import get_current_user, get_db, get_org_tier, tier_allows
 from app.enrichments.registry import registry
-from app.models import EvidenceCapture
+from app.models import EvidenceCapture, User
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -83,6 +83,27 @@ async def run_transform(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_optional),
 ) -> dict:
     """Execute a transform and return discovered nodes and edges."""
+    # Tier enforcement — pro transforms require team/enterprise org
+    transform_obj = registry.get(req.slug)
+    if transform_obj and transform_obj.tier == "pro":
+        if credentials:
+            try:
+                user = get_current_user(credentials, db)
+                org_tier = get_org_tier(user, db)
+            except Exception:
+                org_tier = "solo"
+        else:
+            org_tier = "solo"
+        if not tier_allows(org_tier, "team"):
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "code": "upgrade_required",
+                    "message": "This transform requires a Pro plan.",
+                    "transform": req.slug,
+                },
+            )
+
     try:
         result = await registry.run(req.slug, req.value, req.api_key)
     except ValueError as exc:

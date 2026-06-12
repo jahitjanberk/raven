@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db
-from app.models import OrgMember, User
+from app.models import OrgMember, Organisation, User
 
 router = APIRouter(prefix="/org", tags=["org"])
 
@@ -108,3 +108,30 @@ def remove_member(
     db.delete(target)
     db.commit()
     return {"ok": True}
+
+
+class SetTierBody(BaseModel):
+    tier: str
+
+
+@router.patch("/tier")
+def set_org_tier(
+    body: SetTierBody,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Owner-only: manually set the org tier (solo/team/enterprise). Used until Stripe is live."""
+    if body.tier not in ("solo", "team", "enterprise"):
+        raise HTTPException(status_code=422, detail="tier must be solo, team, or enterprise")
+
+    m = _require_admin(user, db)
+    if m.role != "owner":
+        raise HTTPException(status_code=403, detail="Only the org owner can change the tier")
+
+    org = db.query(Organisation).filter(Organisation.id == m.org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    org.tier = body.tier
+    db.commit()
+    return {"ok": True, "tier": body.tier}

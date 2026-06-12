@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from jose import jwt
 from sqlalchemy.orm import Session
 
-from app.deps import ALGORITHM, SECRET_KEY, get_current_user, get_db
+from app.deps import ALGORITHM, SECRET_KEY, get_current_user, get_db, get_org_tier
 from app.email import (
     send_invite_email,
     send_password_reset_email,
@@ -278,5 +278,8 @@ def reset_password(req: ResetPasswordBody, db: Session = Depends(get_db)) -> dic
 # ── Validate current session ──────────────────────────────────────────────────
 
 @router.get("/me", response_model=MeResponse)
-def get_me(user: User = Depends(get_current_user)) -> MeResponse:
-    return MeResponse(user_id=user.id, email=user.email, name=user.name, initials=user.initials)
+def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> MeResponse:
+    return MeResponse(
+        user_id=user.id, email=user.email, name=user.name,
+        initials=user.initials, org_tier=get_org_tier(user, db),
+    )

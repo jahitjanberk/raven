@@ -33,6 +33,13 @@ export interface TransformResult {
   error?: string | null
 }
 
+export class UpgradeRequiredError extends Error {
+  constructor(public readonly transform: string) {
+    super('This transform requires a Pro plan.')
+    this.name = 'UpgradeRequiredError'
+  }
+}
+
 // ─── API calls ────────────────────────────────────────────────────────────────
 
 export async function fetchTransforms(): Promise<Transform[]> {
@@ -62,10 +69,18 @@ export async function runTransform(
     }),
   })
   if (!resp.ok) {
+    if (resp.status === 402) {
+      let transform = slug
+      try {
+        const body = await resp.json() as { detail?: { transform?: string } }
+        if (body.detail?.transform) transform = body.detail.transform
+      } catch { /* ignore */ }
+      throw new UpgradeRequiredError(transform)
+    }
     let detail = resp.statusText
     try {
       const body = await resp.json() as { detail?: string }
-      if (body.detail) detail = body.detail
+      if (body.detail) detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail)
     } catch { /* ignore parse errors */ }
     throw new Error(detail)
   }

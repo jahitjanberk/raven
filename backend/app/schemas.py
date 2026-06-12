@@ -114,6 +114,7 @@ class MeResponse(BaseModel):
     email: str
     name: str
     initials: str
+    org_tier: str = "solo"
 
 
 # ── Projects ─────────────────────────────────────────────────────────────────
