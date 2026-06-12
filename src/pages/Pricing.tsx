@@ -4,12 +4,12 @@ import { SiteHeader } from '../components/SiteHeader'
 import { SiteFooter } from '../components/SiteFooter'
 import { useIsMobile } from '../hooks/useBreakpoint'
 
-// ── Stripe checkout links — swap in real URLs from your Stripe dashboard ──────
+// ── Stripe checkout links — set these once Stripe is configured ───────────────
 const STRIPE = {
-  pro_monthly:  'https://buy.stripe.com/placeholder_pro_monthly',
-  pro_annual:   'https://buy.stripe.com/placeholder_pro_annual',
-  team_monthly: 'https://buy.stripe.com/placeholder_team_monthly',
-  team_annual:  'https://buy.stripe.com/placeholder_team_annual',
+  pro_monthly:  '',
+  pro_annual:   '',
+  team_monthly: '',
+  team_annual:  '',
 }
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -190,7 +190,11 @@ export function PricingPage() {
   const [annual, setAnnual] = useState(false)
 
   const openStripe = (url: string) => {
-    window.open(url, '_blank', 'noopener')
+    if (url) {
+      window.open(url, '_blank', 'noopener')
+    } else {
+      navigate('/contact?type=enterprise')
+    }
   }
 
   return (
