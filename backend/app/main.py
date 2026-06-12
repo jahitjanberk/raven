@@ -2,8 +2,12 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from sqlalchemy import text
 
 from app.database import Base, engine, SessionLocal
@@ -15,6 +19,7 @@ from app.routers import status as status_router
 from app.routers import audit as audit_router
 from app.routers import evidence as evidence_router
 from app.routers import contact as contact_router
+from app.routers import org as org_router
 
 
 def _migrate_db() -> None:
@@ -81,7 +86,10 @@ async def lifespan(_: FastAPI):
     yield
 
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Raven API", version="2.0.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
 _ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
@@ -102,6 +110,7 @@ app.include_router(status_router.router,      prefix="/api")
 app.include_router(audit_router.router,       prefix="/api")
 app.include_router(evidence_router.router,    prefix="/api")
 app.include_router(contact_router.router,     prefix="/api")
+app.include_router(org_router.router,         prefix="/api")
 
 
 @app.get("/health")

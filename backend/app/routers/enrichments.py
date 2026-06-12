@@ -2,14 +2,18 @@ import hashlib
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
 from app.enrichments.registry import registry
 from app.models import EvidenceCapture
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -71,7 +75,9 @@ async def list_transforms() -> list[dict]:
 
 
 @router.post("/transforms/run")
+@limiter.limit("30/minute")
 async def run_transform(
+    request: Request,
     req: RunRequest,
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_optional),

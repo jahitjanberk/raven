@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
 import { useTheme } from '../context/ThemeContext'
 import { UIIcon } from '../icons/UIIcon'
 import { useIsMobile } from '../hooks/useBreakpoint'
 import type { Classification, InvestigationType } from '../types/project'
 import { RavenLogo } from '../components/RavenLogo'
+import { fetchOrgMembers, updateMemberRole, removeMember, type OrgMember } from '../api/org'
 
 const CLASSIFICATIONS: Classification[] = ['OFFICIAL', 'OFFICIAL-SENSITIVE', 'CUSTOM']
 const INVESTIGATION_TYPES: InvestigationType[] = [
@@ -12,10 +13,11 @@ const INVESTIGATION_TYPES: InvestigationType[] = [
   'Counter-terrorism', 'Organised crime', 'Other',
 ]
 
-type Section = 'profile' | 'appearance' | 'defaults' | 'canvas' | 'about'
+type Section = 'profile' | 'appearance' | 'defaults' | 'canvas' | 'team' | 'about'
 
 const NAV: { id: Section; label: string; icon: string; group: string }[] = [
   { id: 'profile',    label: 'Profile',     icon: 'person',   group: 'Account'     },
+  { id: 'team',       label: 'Team',        icon: 'org',      group: 'Account'     },
   { id: 'appearance', label: 'Appearance',  icon: 'moon',     group: 'Preferences' },
   { id: 'defaults',   label: 'Defaults',    icon: 'settings', group: 'Preferences' },
   { id: 'canvas',     label: 'Canvas',      icon: 'node',     group: 'Preferences' },
@@ -343,6 +345,149 @@ function CanvasSection() {
   )
 }
 
+// ── Team section ──────────────────────────────────────────────────────────────
+
+const ROLE_LABELS: Record<string, string> = { owner: 'Owner', admin: 'Admin', member: 'Member' }
+const ROLE_COLORS: Record<string, string> = {
+  owner:  'var(--accent)',
+  admin:  'var(--purple)',
+  member: 'var(--text-tertiary)',
+}
+
+function TeamSection() {
+  const [members, setMembers] = useState<OrgMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
+  const [working, setWorking] = useState<string | null>(null)
+
+  const auth = (() => { try { return JSON.parse(localStorage.getItem('raven-auth') ?? '{}') } catch { return {} } })()
+  const currentUserId: string = auth.userId ?? ''
+
+  const myRole = members.find(m => m.user_id === currentUserId)?.role ?? 'member'
+  const canManage = myRole === 'owner' || myRole === 'admin'
+
+  useEffect(() => {
+    fetchOrgMembers()
+      .then(setMembers)
+      .catch(() => setError('Could not load team members.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleRoleChange = async (userId: string, role: string) => {
+    setWorking(userId)
+    try {
+      await updateMemberRole(userId, role)
+      setMembers(prev => prev.map(m => m.user_id === userId ? { ...m, role: role as OrgMember['role'] } : m))
+    } catch { setError('Failed to update role.') }
+    finally { setWorking(null) }
+  }
+
+  const handleRemove = async (userId: string) => {
+    if (!confirm('Remove this member from your organisation?')) return
+    setWorking(userId)
+    try {
+      await removeMember(userId)
+      setMembers(prev => prev.filter(m => m.user_id !== userId))
+    } catch { setError('Failed to remove member.') }
+    finally { setWorking(null) }
+  }
+
+  return (
+    <>
+      <SectionTitle title="Team" description="Members of your organisation. Admins and owners can manage roles and remove members." />
+
+      {error && (
+        <div style={{ padding: '10px 14px', marginBottom: 16, borderRadius: 'var(--r-md)', background: 'var(--red-soft)', border: '1px solid var(--red-border)', fontSize: 13, color: 'var(--red)' }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-tertiary)', fontSize: 13 }}>
+          <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--border-mid)', borderTopColor: 'var(--accent)', animation: 'spin 0.7s linear infinite' }} />
+          Loading…
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {members.map(m => {
+            const isMe = m.user_id === currentUserId
+            const isOwner = m.role === 'owner'
+            const busy = working === m.user_id
+            return (
+              <div key={m.user_id} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 14px', borderRadius: 'var(--r-md)',
+                background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)',
+                opacity: busy ? 0.6 : 1, transition: 'opacity 0.15s',
+              }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                  background: 'var(--bg-overlay)', border: '1px solid var(--border-soft)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)',
+                }}>
+                  {m.initials || m.name.slice(0, 2).toUpperCase() || '??'}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 1 }}>
+                    {m.name || '—'} {isMe && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>(you)</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+                </div>
+                <span style={{
+                  fontSize: 10.5, fontWeight: 600, padding: '3px 8px',
+                  borderRadius: 'var(--r-xs)', fontFamily: 'var(--font-mono)',
+                  color: ROLE_COLORS[m.role], background: 'var(--bg-overlay)',
+                  border: '1px solid var(--border-subtle)', letterSpacing: '0.04em',
+                  textTransform: 'uppercase', flexShrink: 0,
+                }}>
+                  {ROLE_LABELS[m.role]}
+                </span>
+                {canManage && !isMe && !isOwner && (
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <select
+                      value={m.role}
+                      disabled={busy}
+                      onChange={e => handleRoleChange(m.user_id, e.target.value)}
+                      style={{
+                        fontSize: 12, padding: '4px 8px', borderRadius: 'var(--r-sm)',
+                        background: 'var(--bg-base)', border: '1px solid var(--border-mid)',
+                        color: 'var(--text-primary)', cursor: 'pointer',
+                      }}
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="member">Member</option>
+                    </select>
+                    <button
+                      onClick={() => handleRemove(m.user_id)}
+                      disabled={busy}
+                      style={{
+                        padding: '4px 10px', borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                        background: 'transparent', border: '1px solid var(--border-mid)',
+                        color: 'var(--text-tertiary)', fontSize: 12,
+                        transition: 'all 0.12s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.color = 'var(--red)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div style={{ marginTop: 24, padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--bg-raised)', border: '1px solid var(--border-subtle)', fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+        To invite new members, use the <strong style={{ color: 'var(--text-secondary)' }}>Invite</strong> button in the graph editor header. Invites expire after 7 days.
+      </div>
+    </>
+  )
+}
+
 // ── About section ─────────────────────────────────────────────────────────────
 
 function AboutSection() {
@@ -590,6 +735,7 @@ export function SettingsPage({ onClose, onLogout }: SettingsPageProps) {
         {/* Content pane */}
         <main style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '24px 20px' : '32px 40px', maxWidth: isMobile ? '100%' : 680 }}>
           {section === 'profile'    && <ProfileSection />}
+          {section === 'team'       && <TeamSection />}
           {section === 'appearance' && <AppearanceSection />}
           {section === 'defaults'   && <DefaultsSection />}
           {section === 'canvas'     && <CanvasSection />}
