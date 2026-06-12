@@ -14,6 +14,7 @@ from app.routers import graphs as graphs_router
 from app.routers import status as status_router
 from app.routers import audit as audit_router
 from app.routers import evidence as evidence_router
+from app.routers import contact as contact_router
 
 
 def _migrate_db() -> None:
@@ -100,6 +101,7 @@ app.include_router(graphs_router.router,      prefix="/api")
 app.include_router(status_router.router,      prefix="/api")
 app.include_router(audit_router.router,       prefix="/api")
 app.include_router(evidence_router.router,    prefix="/api")
+app.include_router(contact_router.router,     prefix="/api")
 
 
 @app.get("/health")

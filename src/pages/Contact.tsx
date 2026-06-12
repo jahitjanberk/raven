@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SiteHeader } from '../components/SiteHeader'
 import { SiteFooter } from '../components/SiteFooter'
+import { BASE_URL } from '../api/client'
 
 // ── Design tokens (matches landing / pricing aesthetic) ───────────────────────
 const BG     = '#fff'
@@ -179,6 +180,8 @@ export function ContactPage() {
   const [badgeRef,    setBadgeRef]    = useState('')
   const [message,     setMessage]     = useState('')
   const [errors,      setErrors]      = useState<Record<string, string>>({})
+  const [submitting,  setSubmitting]  = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -192,10 +195,31 @@ export function ContactPage() {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (validate()) setSubmitted(true)
-    // In production: POST to /api/contact or a Formspree / Resend endpoint
+    if (!validate()) return
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const resp = await fetch(`${BASE_URL}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enquiry_type: enquiryType,
+          name, org, email, role,
+          team_size: teamSize,
+          jurisdiction,
+          badge_ref: badgeRef,
+          message,
+        }),
+      })
+      if (!resp.ok) throw new Error('Server error')
+      setSubmitted(true)
+    } catch {
+      setSubmitError('Something went wrong — please try again or email us directly.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) return <ThankYou type={enquiryType} />
@@ -337,21 +361,27 @@ export function ContactPage() {
               {errors.message && <p style={{ margin: '5px 0 0', fontSize: 12, color: '#dc2626' }}>{errors.message}</p>}
             </Field>
 
+            {submitError && (
+              <p style={{ margin: '0 0 12px', fontSize: 13, color: '#dc2626' }}>{submitError}</p>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
               <p style={{ margin: 0, fontSize: 12, color: TEXT3, maxWidth: '34ch', lineHeight: 1.5 }}>
                 We will not add you to a mailing list or share your details with third parties.
               </p>
               <button
                 type="submit"
+                disabled={submitting}
                 style={{
                   fontFamily: MONO, fontSize: 11.5, letterSpacing: '.08em', textTransform: 'uppercase',
                   padding: '13px 28px', background: TEXT1, color: '#fff', border: 'none',
-                  cursor: 'pointer', transition: 'opacity .15s', whiteSpace: 'nowrap',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  opacity: submitting ? 0.6 : 1,
+                  transition: 'opacity .15s', whiteSpace: 'nowrap',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.opacity = '.82' }}
-                onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+                onMouseEnter={e => { if (!submitting) e.currentTarget.style.opacity = '.82' }}
+                onMouseLeave={e => { if (!submitting) e.currentTarget.style.opacity = '1' }}
               >
-                Send message →
+                {submitting ? 'Sending…' : 'Send message →'}
               </button>
             </div>
           </form>
