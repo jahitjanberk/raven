@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { SiteHeader } from '../components/SiteHeader'
 import { SiteFooter } from '../components/SiteFooter'
+import { BASE_URL } from '../api/client'
 
 const MONO = "'IBM Plex Mono',ui-monospace,monospace"
 const SANS = "'Helvetica Neue',Helvetica,Arial,sans-serif"
@@ -103,7 +104,7 @@ export function StatusPage() {
 
   const fetch_ = useCallback(async () => {
     try {
-      const resp = await fetch(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/status`)
+      const resp = await fetch(`${BASE_URL}/api/status`)
       if (!resp.ok) throw new Error('API error')
       const json = await resp.json() as StatusData
       setData(json)
